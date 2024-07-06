@@ -51,7 +51,7 @@ A `ProofSystem` has three modes:
 * `PROOFSYSTEM_MODE_WITNESS_GENERATION`: generate the extended witness for the FHE circuit, which is needed for proving correct computation
 
 ## Links and Resources
-For a more complete overview of our project, have a look at [zkFHE.github.io](https://zkfhe.github.io), where you'll out more about what we're trying to achieve
+For a more complete overview of our project, have a look at [zkFHE.github.io](https://zkfhe.github.io), where you'll find out more about what we're trying to achieve
 
 ## Installation
 
