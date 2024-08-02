@@ -183,8 +183,8 @@ else ()
     set(NATIVE_OPT "")
 endif ()
 
-set(C_COMPILE_FLAGS "-Wall -Werror -O3 ${NATIVE_OPT} -DOPENFHE_VERSION=${OPENFHE_VERSION}")
-set(CXX_COMPILE_FLAGS "-Wall -Werror -O3 ${NATIVE_OPT} -DOPENFHE_VERSION=${OPENFHE_VERSION} ${IGNORE_WARNINGS}")
+set(C_COMPILE_FLAGS "-Wall -O3 ${NATIVE_OPT} -DOPENFHE_VERSION=${OPENFHE_VERSION}")
+set(CXX_COMPILE_FLAGS "-Wall -O3 ${NATIVE_OPT} -DOPENFHE_VERSION=${OPENFHE_VERSION} ${IGNORE_WARNINGS}")
 
 if (EMSCRIPTEN)
     set(EMSCRIPTEN_IGNORE_WARNINGS "-Wno-unused-but-set-variable -Wno-unknown-warning-option")
@@ -547,7 +547,7 @@ endif ()
 include(ExternalProject)
 
 # third party directories
-set(THIRDPARTYDIR ${CMAKE_CURRENT_SOURCE_DIR}/third-party)
+# set(THIRDPARTYDIR ${CMAKE_CURRENT_SOURCE_DIR}/third-party)
 include_directories(${THIRDPARTYDIR}/include)
 
 ### Handle third-party HEXL
@@ -556,13 +556,13 @@ if (WITH_INTEL_HEXL)
 endif ()
 
 ### Handle third-party CEREAL
-include_directories(${THIRDPARTYDIR}/cereal/include)
-install(DIRECTORY ${THIRDPARTYDIR}/cereal/include/ DESTINATION include/openfhe)
+# include_directories(${THIRDPARTYDIR}/cereal/include)
+# install(DIRECTORY ${THIRDPARTYDIR}/cereal/include/ DESTINATION include/openfhe)
 
-include_directories(${CMAKE_SOURCE_DIR}/third-party/google-test/googletest)
-include_directories(${CMAKE_SOURCE_DIR}/third-party/google-test/googletest/include)
-include_directories(${CMAKE_SOURCE_DIR}/src/core/include)
-include_directories(${CMAKE_BINARY_DIR}/src/core)
+# include_directories(${CMAKE_SOURCE_DIR}/third-party/google-test/googletest)
+# include_directories(${CMAKE_SOURCE_DIR}/third-party/google-test/googletest/include)
+# include_directories(${CMAKE_SOURCE_DIR}/src/core/include)
+# include_directories(${CMAKE_BINARY_DIR}/src/core)
 
 ### Handle third-party gperftools for optional tcmalloc
 
@@ -788,3 +788,7 @@ install(FILES
 # Install the export set for use with the install-tree
 install(EXPORT OpenFHETargets DESTINATION
         "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+
+
+# again, push PKELIBS upwards to be able to link with main target
+set(PKELIBS ${PKELIBS} PARENT_SCOPE)

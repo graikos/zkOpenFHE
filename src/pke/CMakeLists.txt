@@ -143,3 +143,6 @@ if( BUILD_STATIC )
 	get_target_property(_compile_defs_static OPENFHEpke_static COMPILE_DEFINITIONS)
 	set(_pal_pke_compile_defs_static ${_compile_defs_static} PARENT_SCOPE)
 endif()
+
+# push PKELIBS upwards to be able to link when creating the main target
+set(PKELIBS ${PKELIBS} PARENT_SCOPE)

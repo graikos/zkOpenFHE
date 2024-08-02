@@ -1,48 +1,114 @@
-cmake_minimum_required (VERSION 3.5.1)
+cmake_minimum_required(VERSION 2.8)
+set(CMAKE_CXX_STANDARD 20)
+set(CXX_STANDARD_REQUIRED ON)
 
-### To use gcc/g++ on a Macintosh, you must set the Compilers
-### here, not inside the project
-##if(APPLE)
-##       set(CMAKE_C_COMPILER "/usr/local/bin/gcc-7")
-##       set(CMAKE_CXX_COMPILER "/usr/local/bin/g++-7")
-##endif()
-### TODO: for now, we use CLang for Mac
-###
-### In order to create OpenFHE's static libraries you should enable
-### the BUILD_STATIC option. For that, you run "cmake .. -DBUILD_STATIC=ON".
-### After having your link completed you will find static libs
-### with the suffix "_static" in ./build/libs/.
-### Examples: OPENFHEpke_static.a, OPENFHEcore_static.a, etc.
-### After you run "make install" in your build directory, you can build your custom application.
-### If you need your application to be linked statically, then run "cmake .. -DBUILD_STATIC=ON"
+project(YourProject)
 
-project(demo CXX)
-set(CMAKE_CXX_STANDARD 17)
-option( BUILD_STATIC "Set to ON to include static versions of the library" OFF)
+set(
+  CURVE
+  "BN128"
+  CACHE
+  STRING
+  "Default curve: one of ALT_BN128, BN128, EDWARDS, MNT4, MNT6"
+)
 
-find_package(OpenFHE)
+set(
+  DEPENDS_DIR
+  "${CMAKE_CURRENT_SOURCE_DIR}/depends"
+  CACHE
+  STRING
+  "Optionally specify the dependency installation directory relative to the source directory (default: inside dependency folder)"
+)
 
-set( CMAKE_CXX_FLAGS ${OpenFHE_CXX_FLAGS} )
+set(
+  OPT_FLAGS
+  ""
+  CACHE
+  STRING
+  "Override C++ compiler optimization flags"
+)
 
-include_directories( ${OPENMP_INCLUDES} )
-include_directories( ${OpenFHE_INCLUDE} )
-include_directories( ${OpenFHE_INCLUDE}/third-party/include )
-include_directories( ${OpenFHE_INCLUDE}/core )
-include_directories( ${OpenFHE_INCLUDE}/pke )
-### add directories for other OpenFHE modules as needed for your project
+option(
+  MULTICORE
+  "Enable parallelized execution, using OpenMP"
+  ON
+)
 
-link_directories( ${OpenFHE_LIBDIR} )
-link_directories( ${OPENMP_LIBRARIES} )
-if(BUILD_STATIC)
-    set( CMAKE_EXE_LINKER_FLAGS "${OpenFHE_EXE_LINKER_FLAGS} -static")
-    link_libraries( ${OpenFHE_STATIC_LIBRARIES} )
-else()
-    set( CMAKE_EXE_LINKER_FLAGS ${OpenFHE_EXE_LINKER_FLAGS} )
-    link_libraries( ${OpenFHE_SHARED_LIBRARIES} )
+option(
+  WITH_PROCPS
+  "Use procps for memory profiling"
+  ON
+)
+
+option(
+  VERBOSE
+  "Print internal messages"
+  OFF
+)
+
+if(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  # Common compilation flags and warning configuration
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wfatal-errors -pthread")
+
+  if("${MULTICORE}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+  endif()
+
+   # Default optimizations flags (to override, use -DOPT_FLAGS=...)
+  if("${OPT_FLAGS}" STREQUAL "")
+    set(OPT_FLAGS "-ggdb3 -O2 -march=native -mtune=native")
+  endif()
 endif()
 
-### ADD YOUR EXECUTABLE(s) HERE
-### add_executable( EXECUTABLE-NAME SOURCES )
-###
-### EXAMPLE:
-### add_executable( test demo-simple-example.cpp )
+add_definitions(-DCURVE_${CURVE})
+
+if(${CURVE} STREQUAL "BN128")
+  add_definitions(-DBN_SUPPORT_SNARK=1)
+endif()
+
+if("${VERBOSE}")
+  add_definitions(-DVERBOSE=1)
+endif()
+
+if("${MULTICORE}")
+  add_definitions(-DMULTICORE=1)
+endif()
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPT_FLAGS}")
+
+include(FindPkgConfig)
+if("${WITH_PROCPS}")
+  pkg_check_modules(PROCPS REQUIRED libprocps)
+else()
+  add_definitions(-DNO_PROCPS)
+endif()
+
+
+set(THIRDPARTYDIR ${CMAKE_CURRENT_SOURCE_DIR}/depends/zkOpenFHE/third-party)
+include_directories(${DEPENDS_DIR})
+include_directories(${THIRDPARTYDIR}/cereal/include)
+include_directories(${CMAKE_BINARY_DIR}/depends/zkOpenFHE/src/core)
+include_directories(${CMAKE_BINARY_DIR}/depends/zkOpenFHE/src/core)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/depends/zkOpenFHE/src/pke/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/depends/zkOpenFHE/src/pke/lib)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/depends/zkOpenFHE/src/core/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/depends/zkOpenFHE/src/core/lib)
+
+include_directories(${THIRDPARTYDIR}/libsnark)
+include_directories(${THIRDPARTYDIR}/libsnark/depends/libfqfft)
+
+
+add_subdirectory(depends)
+
+
+
+
+add_executable(
+	main
+
+	src/main.cpp
+	)
+
+message(${PKELIBS}="${PKELIBS}")
+target_link_libraries(main ${PKELIBS})
+target_link_libraries(main PRIVATE snark)
