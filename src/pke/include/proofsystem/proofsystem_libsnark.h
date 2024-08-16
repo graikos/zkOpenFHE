@@ -8,12 +8,14 @@
 #include "libsnark/gadgetlib1/pb_variable.hpp"
 #include "gadgets_libsnark.h"
 #include "key/evalkey.h"
+#include <libff/algebra/fields/binary/gf192.hpp>
 
 #include <vector>
 using std::vector;
 
 using namespace libsnark;
-typedef libff::Fr<default_r1cs_ppzksnark_pp> FieldT;
+// typedef libff::Fr<default_r1cs_ppzksnark_pp> FieldT;
+typedef libff::gf192 FieldT;
 
 class LibsnarkWitnessMetadata : public ProofsystemMetadata {
 public:

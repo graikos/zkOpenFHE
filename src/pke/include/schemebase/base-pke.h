@@ -59,7 +59,9 @@ class PKEBase {
     using IntType  = typename Element::Integer;
     using DugType  = typename Element::DugType;
     using DggType  = typename Element::DggType;
+    using DetDggType  = typename Element::DetDggType;
     using TugType  = typename Element::TugType;
+    using DetTugType  = typename Element::DetTugType;
 
 public:
     virtual ~PKEBase() {}
@@ -102,6 +104,8 @@ public:
    */
     virtual Ciphertext<Element> Encrypt(Element plaintext, const PublicKey<Element> publicKey) const;
 
+    virtual Ciphertext<Element> EncryptZeroDeterministic(const PublicKey<Element> publicKey, const std::vector<unsigned char> &seed_data) const;
+
     /**
    * Method for decrypting plaintext using LBC
    *
@@ -138,6 +142,10 @@ public:
     virtual std::shared_ptr<std::vector<Element> > EncryptZeroCore(const PublicKey<Element> publicKey,
                                                                    const std::shared_ptr<ParmType> params,
                                                                    const DggType& dgg) const;
+
+    virtual std::shared_ptr<std::vector<Element> > EncryptZeroCoreDeterministic(const PublicKey<Element> publicKey,
+                                                                   const std::shared_ptr<ParmType> params,
+                                                                   const std::vector<unsigned char> &seed_data) const;
 
     virtual Element DecryptCore(const std::vector<Element>& cv, const PrivateKey<Element> privateKey) const;
 };

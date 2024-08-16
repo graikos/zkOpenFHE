@@ -55,7 +55,9 @@ class PKERNS : public PKEBase<DCRTPoly> {
     using IntType  = typename DCRTPoly::Integer;
     using DugType  = typename DCRTPoly::DugType;
     using DggType  = typename DCRTPoly::DggType;
+    using DetDggType  = typename DCRTPoly::DetDggType;
     using TugType  = typename DCRTPoly::TugType;
+    using DetTugType  = typename DCRTPoly::DetTugType;
 
 public:
     virtual ~PKERNS() {}
@@ -83,6 +85,8 @@ public:
    * @param *ciphertext ciphertext which results from encryption.
    */
     Ciphertext<DCRTPoly> Encrypt(DCRTPoly plaintext, const PrivateKey<DCRTPoly> privateKey) const override;
+
+    Ciphertext<DCRTPoly> EncryptZeroDeterministic(const PublicKey<DCRTPoly> publicKey, const std::vector<unsigned char> &seed_data) const override;
 
     /**
    * Method for decrypting plaintext using LBC
@@ -116,6 +120,10 @@ public:
     std::shared_ptr<std::vector<DCRTPoly>> EncryptZeroCore(const PublicKey<DCRTPoly> publicKey,
                                                            const std::shared_ptr<ParmType> params,
                                                            const DggType& dgg) const override;
+
+    std::shared_ptr<std::vector<DCRTPoly>> EncryptZeroCoreDeterministic(const PublicKey<DCRTPoly> publicKey,
+                                                               const std::shared_ptr<ParmType> params,
+                                                               const std::vector<unsigned char> &seed_data) const override;
 
     DCRTPoly DecryptCore(const std::vector<DCRTPoly>& cv, const PrivateKey<DCRTPoly> privateKey) const override;
 

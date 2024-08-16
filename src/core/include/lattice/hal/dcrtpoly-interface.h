@@ -103,8 +103,10 @@ public:
     typedef DCRTPolyInterface<DerivedType, BigVecType> DCRTPolyInterfaceType;
 
     typedef DiscreteGaussianGeneratorImpl<LilVecType> DggType;
+    typedef DetDiscreteGaussianGeneratorImpl<LilVecType> DetDggType;
     typedef DiscreteUniformGeneratorImpl<LilVecType> DugType;
     typedef TernaryUniformGeneratorImpl<LilVecType> TugType;
+    typedef DetTernaryUniformGeneratorImpl<LilVecType> DetTugType;
     typedef BinaryUniformGeneratorImpl<LilVecType> BugType;
 
 protected:

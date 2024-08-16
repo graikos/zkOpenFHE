@@ -85,6 +85,11 @@ class DiscreteGaussianGeneratorImpl;
 
 typedef DiscreteGaussianGeneratorImpl<BigVector> DiscreteGaussianGenerator;
 
+template <typename VecType>
+class DetDiscreteGaussianGeneratorImpl;
+
+typedef DetDiscreteGaussianGeneratorImpl<BigVector> DetDiscreteGaussianGenerator;
+
 /**
  * @brief The class for Discrete Gaussion Distribution generator.
  */
@@ -200,7 +205,7 @@ public:
    */
     static int64_t GenerateIntegerKarney(double mean, double stddev);
 
-private:
+protected:
     usint FindInVector(const std::vector<double>& S, double search) const;
 
     static double UnnormalizedGaussianPDF(const double& mean, const double& sigma, int32_t x) {
@@ -271,6 +276,28 @@ private:
     double m_std;
     bool peikert = false;
 };
+
+template <typename VecType>
+class DetDiscreteGaussianGeneratorImpl : public DiscreteGaussianGeneratorImpl<VecType> {
+
+public:
+    explicit DetDiscreteGaussianGeneratorImpl(const std::vector<unsigned char>& data, double std = 1);
+
+    int32_t GenerateInt();
+    std::shared_ptr<int64_t> GenerateIntVector(usint size);
+    typename VecType::Integer GenerateInteger(const typename VecType::Integer& modulus);
+    typename VecType::Integer GenerateInteger(double mean, double stddev, size_t n,
+                                              const typename VecType::Integer& modulus);
+    int32_t GenerateInteger(double mean, double stddev, size_t n);
+    // NOTE: hiding the static method. A bit dangerous, but everywhere this method is called,
+    // it's called on an object
+    int64_t GenerateIntegerKarney(double mean, double stddev);
+
+private:
+    std::unique_ptr<DeterministicPseudoRandomNumberGenerator> prng;
+};
+
+#include "detdiscretegaussiangenerator.tcc"
 
 }  // namespace lbcrypto
 

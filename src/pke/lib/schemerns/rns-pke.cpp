@@ -68,6 +68,17 @@ Ciphertext<DCRTPoly> PKERNS::Encrypt(DCRTPoly plaintext, const PublicKey<DCRTPol
     return ciphertext;
 }
 
+Ciphertext<DCRTPoly> PKERNS::EncryptZeroDeterministic(const PublicKey<DCRTPoly> publicKey, const std::vector<unsigned char> &seed_data) const {
+    Ciphertext<DCRTPoly> ciphertext(std::make_shared<CiphertextImpl<DCRTPoly>>(publicKey));
+
+    std::shared_ptr<std::vector<DCRTPoly>> ba  = EncryptZeroCoreDeterministic(publicKey, nullptr, seed_data);
+
+    ciphertext->SetElements({std::move((*ba)[0]), std::move((*ba)[1])});
+    ciphertext->SetNoiseScaleDeg(1);
+
+    return ciphertext;
+}
+
 DecryptResult PKERNS::Decrypt(ConstCiphertext<DCRTPoly> ciphertext, const PrivateKey<DCRTPoly> privateKey,
                               Poly* plaintext) const {
     const std::vector<DCRTPoly>& cv = ciphertext->GetElements();
@@ -169,6 +180,64 @@ std::shared_ptr<std::vector<DCRTPoly>> PKERNS::EncryptZeroCore(const PublicKey<D
 
     DCRTPoly e0(dggGen, elementParams, Format::EVALUATION);
     DCRTPoly e1(dggGen, elementParams, Format::EVALUATION);
+
+    uint32_t sizeQ  = pk[0].GetParams()->GetParams().size();
+    uint32_t sizeQl = elementParams->GetParams().size();
+
+    DCRTPoly c0, c1;
+    if (sizeQl != sizeQ) {
+        // Clone public keys because we need to drop towers.
+        DCRTPoly p0 = pk[0].Clone();
+        DCRTPoly p1 = pk[1].Clone();
+
+        uint32_t diffQl = sizeQ - sizeQl;
+        p0.DropLastElements(diffQl);
+        p1.DropLastElements(diffQl);
+
+        c0 = p0 * v + ns * e0;
+        c1 = p1 * v + ns * e1;
+    }
+    else {
+        // Use public keys as they are
+        const DCRTPoly& p0 = pk[0];
+        const DCRTPoly& p1 = pk[1];
+
+        c0 = p0 * v + ns * e0;
+        c1 = p1 * v + ns * e1;
+    }
+
+    return std::make_shared<std::vector<DCRTPoly>>(std::initializer_list<DCRTPoly>({std::move(c0), std::move(c1)}));
+}
+
+std::shared_ptr<std::vector<DCRTPoly>> PKERNS::EncryptZeroCoreDeterministic(const PublicKey<DCRTPoly> publicKey,
+                                                               const std::shared_ptr<ParmType> params,
+                                                               const std::vector<unsigned char> &seed_data) const {
+    const auto cryptoParams = std::dynamic_pointer_cast<CryptoParametersRNS>(publicKey->GetCryptoParameters());
+
+    const std::vector<DCRTPoly>& pk = publicKey->GetPublicElements();
+    const auto ns                   = cryptoParams->GetNoiseScale();
+    const DggType& dggsecret        = cryptoParams->GetDiscreteGaussianGenerator();
+
+    // create new deterministic DGG using teh Std of the secret
+    DetDggType detdgg(seed_data, dggsecret.GetStd());
+
+    // TODO: add deterministic TUG and DGG implementations, and then define the types and then overload constructor
+    // TugType tug;
+    DetTugType dettug(seed_data);
+
+    const std::shared_ptr<ParmType> elementParams = (params == nullptr) ? cryptoParams->GetElementParams() : params;
+    // TODO (dsuponit): "tug" must be assigned with TernaryUniformGenerator. Otherwise the DCRTPoly constructor crashes.
+    // check other files if "tug" is properly assigned
+    // if (cryptoParams->GetSecretKeyDist() != GAUSSIAN) {
+    //    OPENFHE_THROW(math_error, "TugType tug must be assigned");
+    //}
+    DCRTPoly v = cryptoParams->GetSecretKeyDist() == GAUSSIAN ? DCRTPoly(detdgg, elementParams, Format::EVALUATION) :
+                                                                DCRTPoly(dettug, elementParams, Format::EVALUATION);
+
+    // const DggType& dggGen = dgg.IsInitialized() ? dgg : cryptoParams->GetDiscreteGaussianGenerator();
+
+    DCRTPoly e0(detdgg, elementParams, Format::EVALUATION);
+    DCRTPoly e1(detdgg, elementParams, Format::EVALUATION);
 
     uint32_t sizeQ  = pk[0].GetParams()->GetParams().size();
     uint32_t sizeQl = elementParams->GetParams().size();

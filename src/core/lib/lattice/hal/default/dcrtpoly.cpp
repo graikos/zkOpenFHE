@@ -255,6 +255,56 @@ DCRTPolyImpl<VecType>::DCRTPolyImpl(const DggType& dgg, const std::shared_ptr<DC
 }
 
 template <typename VecType>
+DCRTPolyImpl<VecType>::DCRTPolyImpl(DetDggType& dgg, const std::shared_ptr<DCRTPolyImpl::Params> dcrtParams,
+                                    Format format) {
+    this->m_format = format;
+    this->m_params = dcrtParams;
+
+    size_t vecSize = dcrtParams->GetParams().size();
+    m_vectors.reserve(vecSize);
+
+    // dgg generating random values
+    std::shared_ptr<int64_t> dggValues = dgg.GenerateIntVector(dcrtParams->GetRingDimension());
+
+    for (usint i = 0; i < vecSize; i++) {
+        NativeVector ilDggValues(dcrtParams->GetRingDimension(), dcrtParams->GetParams()[i]->GetModulus());
+
+        for (usint j = 0; j < dcrtParams->GetRingDimension(); j++) {
+            NativeInteger::Integer entry;
+            // if the random generated value is less than zero, then multiply it by
+            // (-1) and subtract the modulus of the current tower to set the
+            // coefficient
+            NativeInteger::SignedNativeInt k = (dggValues.get())[j];
+            auto dcrt_qmodulus =
+                (NativeInteger::SignedNativeInt)dcrtParams->GetParams()[i]->GetModulus().ConvertToInt();
+            auto dgg_stddev = dgg.GetStd();
+
+            if (dgg_stddev > dcrt_qmodulus) {
+                // rescale k to dcrt_qmodulus
+                auto mk = k % dcrt_qmodulus;
+                k       = (NativeInteger::Integer)mk;
+            }
+
+            if (k < 0) {
+                k *= (-1);
+                entry = (NativeInteger::Integer)dcrt_qmodulus - (NativeInteger::Integer)k;
+            }
+            else {  // if greater than or equal to zero, set it the value generated
+                entry = k;
+            }
+            ilDggValues[j] = entry;
+        }
+
+        PolyType ilvector(dcrtParams->GetParams()[i]);
+        // the random values are set in coefficient format
+        ilvector.SetValues(std::move(ilDggValues), Format::COEFFICIENT);
+        // set the format to what the caller asked for.
+        ilvector.SetFormat(this->GetFormat());
+        m_vectors.push_back(std::move(ilvector));
+    }
+}
+
+template <typename VecType>
 DCRTPolyImpl<VecType>::DCRTPolyImpl(DugType& dug, const std::shared_ptr<DCRTPolyImpl::Params> dcrtParams,
                                     Format format) {
     this->m_format = format;
@@ -302,6 +352,48 @@ DCRTPolyImpl<VecType>::DCRTPolyImpl(const BugType& bug, const std::shared_ptr<DC
 
 template <typename VecType>
 DCRTPolyImpl<VecType>::DCRTPolyImpl(const TugType& tug, const std::shared_ptr<DCRTPolyImpl::Params> dcrtParams,
+                                    Format format, uint32_t h) {
+    this->m_format = format;
+    this->m_params = dcrtParams;
+
+    size_t numberOfTowers = dcrtParams->GetParams().size();
+    m_vectors.reserve(numberOfTowers);
+
+    // tug generating random values
+    std::shared_ptr<int32_t> tugValues = tug.GenerateIntVector(dcrtParams->GetRingDimension(), h);
+
+    for (usint i = 0; i < numberOfTowers; i++) {
+        NativeVector ilTugValues(dcrtParams->GetRingDimension(), dcrtParams->GetParams()[i]->GetModulus());
+
+        for (usint j = 0; j < dcrtParams->GetRingDimension(); j++) {
+            NativeInteger::Integer entry;
+            // if the random generated value is less than zero, then multiply it by
+            // (-1) and subtract the modulus of the current tower to set the
+            // coefficient
+            NativeInteger::SignedNativeInt k = (tugValues.get())[j];
+            if (k < 0) {
+                k *= (-1);
+                entry = (NativeInteger::Integer)dcrtParams->GetParams()[i]->GetModulus().ConvertToInt() -
+                        (NativeInteger::Integer)k;
+            }
+            else {  // if greater than or equal to zero, set it the value generated
+                entry = k;
+            }
+            ilTugValues[j] = entry;
+        }
+
+        PolyType ilvector(dcrtParams->GetParams()[i]);
+        // the random values are set in coefficient format
+        ilvector.SetValues(std::move(ilTugValues), Format::COEFFICIENT);
+        // set the format to what the caller asked for.
+        ilvector.SetFormat(this->m_format);
+        m_vectors.push_back(std::move(ilvector));
+    }
+}
+
+
+template <typename VecType>
+DCRTPolyImpl<VecType>::DCRTPolyImpl(DetTugType& tug, const std::shared_ptr<DCRTPolyImpl::Params> dcrtParams,
                                     Format format, uint32_t h) {
     this->m_format = format;
     this->m_params = dcrtParams;

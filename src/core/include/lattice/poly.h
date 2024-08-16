@@ -68,8 +68,10 @@ public:
     typedef VecType Vector;
     typedef PolyImpl<VecType> PolyType;
     typedef DiscreteGaussianGeneratorImpl<VecType> DggType;
+    typedef DetDiscreteGaussianGeneratorImpl<VecType> DetDggType;
     typedef DiscreteUniformGeneratorImpl<VecType> DugType;
     typedef TernaryUniformGeneratorImpl<VecType> TugType;
+    typedef DetTernaryUniformGeneratorImpl<VecType> DetTugType;
     typedef BinaryUniformGeneratorImpl<VecType> BugType;
     typedef PolyImpl<NativeVector> PolyNative;
     typedef PolyImpl<VecType> PolyLargeType;

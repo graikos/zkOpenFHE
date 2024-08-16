@@ -44,6 +44,7 @@
 #include <thread>
 #include "math/hal.h"
 #include "utils/prng/blake2engine.h"
+#include "utils/prng/blake2.h"
 
 // #define FIXED_SEED // if defined, then uses a fixed seed number for
 // reproducible results during debug. Use only one OMP thread to ensure
@@ -127,7 +128,7 @@ public:
                 // heap variable; we are going to use the least 32 bits of its memory
                 // location as the counter for BLAKE2 This will increase the entropy of
                 // the BLAKE2 sample
-                void* mem = malloc(1);
+                void* mem        = malloc(1);
                 uint32_t counter = reinterpret_cast<long long>(mem);  // NOLINT
                 free(mem);
 
@@ -183,6 +184,37 @@ private:
         // local copies of m_prng are created for each thread
     #pragma omp threadprivate(m_prng)
 #endif
+};
+
+/**
+ * @brief The class providing a deterministic PRNG, whose seed will be the hash of the given data.
+ */
+class DeterministicPseudoRandomNumberGenerator {
+public:
+    inline DeterministicPseudoRandomNumberGenerator(const std::vector<unsigned char>& data) {
+        // hash all the given data to produce the seed of the PRNG
+        unsigned char tbu_as_seed[64];
+        blake2b(tbu_as_seed, 64, data.data(), data.size(), nullptr, 0);
+
+        // convert from unsigned char to array of 16 ints
+
+        std::array<Blake2Engine::result_type, 16> seed_arr;
+        for (uint8_t i = 0; i < 16; ++i) {
+            // using big endian, although it doesn't matter
+            seed_arr[i] = (tbu_as_seed[i * 4]) << 24 | (tbu_as_seed[i * 4 + 1]) << 16 | (tbu_as_seed[i * 4 + 2]) << 8 |
+                          (tbu_as_seed[i * 4 + 3]);
+        }
+
+        m_prng = std::make_unique<PRNG>(seed_arr);
+    }
+    inline void InitPRNG() {}
+
+    inline PRNG& GetPRNG() {
+        return *m_prng;
+    }
+
+private:
+    std::unique_ptr<PRNG> m_prng;
 };
 
 /**

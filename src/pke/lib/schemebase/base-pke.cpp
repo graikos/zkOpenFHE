@@ -117,6 +117,17 @@ Ciphertext<Element> PKEBase<Element>::Encrypt(Element plaintext, const PublicKey
     return ciphertext;
 }
 
+template <class Element>
+Ciphertext<Element> PKEBase<Element>::EncryptZeroDeterministic(const PublicKey<Element> publicKey, const std::vector<unsigned char> &seed_data) const {
+    Ciphertext<Element> ciphertext           = std::make_shared<CiphertextImpl<Element>>(publicKey);
+    std::shared_ptr<std::vector<Element>> ba = EncryptZeroCoreDeterministic(publicKey, nullptr, seed_data);
+
+    ciphertext->SetElements({std::move((*ba)[0]), std::move((*ba)[1])});
+    ciphertext->SetNoiseScaleDeg(1);
+
+    return ciphertext;
+}
+
 // makeSparse is not used by this scheme
 template <class Element>
 std::shared_ptr<std::vector<Element>> PKEBase<Element>::EncryptZeroCore(const PrivateKey<Element> privateKey,
@@ -173,6 +184,57 @@ std::shared_ptr<std::vector<Element>> PKEBase<Element>::EncryptZeroCore(const Pu
 
     Element e0(dggGen, elementParams, Format::EVALUATION);
     Element e1(dggGen, elementParams, Format::EVALUATION);
+
+    Element b(elementParams);
+    Element a(elementParams);
+
+    b = p0 * v + ns * e0;
+    a = p1 * v + ns * e1;
+
+    return std::make_shared<std::vector<Element>>(std::initializer_list<Element>({std::move(b), std::move(a)}));
+}
+
+template <class Element>
+std::shared_ptr<std::vector<Element>> PKEBase<Element>::EncryptZeroCoreDeterministic(
+    const PublicKey<Element> publicKey, const std::shared_ptr<ParmType> params,
+    const std::vector<unsigned char>& seed_data) const {
+
+    const auto cryptoParams =
+        std::dynamic_pointer_cast<CryptoParametersRLWE<Element>>(publicKey->GetCryptoParameters());
+
+    const auto ns            = cryptoParams->GetNoiseScale();
+    const DggType& dggsecret = cryptoParams->GetDiscreteGaussianGenerator();
+    // TugType tug;
+
+    // create new deterministic DGG using teh Std of the secret
+    DetDggType detdgg(seed_data, dggsecret.GetStd());
+
+    // TODO: add deterministic TUG and DGG implementations, and then define the types and then overload constructor
+    // TugType tug;
+    DetTugType dettug(seed_data);
+
+    const std::shared_ptr<ParmType> elementParams = (params == nullptr) ? cryptoParams->GetElementParams() : params;
+
+    const std::vector<Element>& pk = publicKey->GetPublicElements();
+
+    Element p0 = pk[0];
+    Element p1 = pk[1];
+
+    usint sizeQ  = elementParams->GetParams().size();
+    usint sizePK = p0.GetParams()->GetParams().size();
+
+    if (sizePK > sizeQ) {
+        p0.DropLastElements(sizePK - sizeQ);
+        p1.DropLastElements(sizePK - sizeQ);
+    }
+
+    Element v = cryptoParams->GetSecretKeyDist() == GAUSSIAN ? Element(detdgg, elementParams, Format::EVALUATION) :
+                                                               Element(dettug, elementParams, Format::EVALUATION);
+
+    // const DggType& dggGen = dgg.IsInitialized() ? dgg : cryptoParams->GetDiscreteGaussianGenerator();
+
+    Element e0(detdgg, elementParams, Format::EVALUATION);
+    Element e1(detdgg, elementParams, Format::EVALUATION);
 
     Element b(elementParams);
     Element a(elementParams);

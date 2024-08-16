@@ -79,8 +79,10 @@ public:
     using DCRTPolyInterfaceType = DCRTPolyInterface<DCRTPolyImpl<VecType>, VecType, NativeVector, PolyImpl>;
 
     using DggType = typename DCRTPolyInterfaceType::DggType;
+    using DetDggType = typename DCRTPolyInterfaceType::DetDggType;
     using DugType = typename DCRTPolyInterfaceType::DugType;
     using TugType = typename DCRTPolyInterfaceType::TugType;
+    using DetTugType = typename DCRTPolyInterfaceType::DetTugType;
     using BugType = typename DCRTPolyInterfaceType::BugType;
 
     // this class contains an array of these, aka NativePoly
@@ -131,6 +133,7 @@ public:
    * Coefficient representation. It is defined in inttypes.h.
    */
     DCRTPolyImpl(const DggType& dgg, const std::shared_ptr<Params> params, Format format = EVALUATION);
+    DCRTPolyImpl(DetDggType& dgg, const std::shared_ptr<Params> params, Format format = EVALUATION);
 
     /**
    * @brief Constructor based on binary distribution generator. This is not
@@ -158,6 +161,7 @@ public:
    * h = 0, the distribution is NOT sparse)
    */
     DCRTPolyImpl(const TugType& tug, const std::shared_ptr<Params> params, Format format = EVALUATION, uint32_t h = 0);
+    DCRTPolyImpl(DetTugType& tug, const std::shared_ptr<Params> params, Format format = EVALUATION, uint32_t h = 0);
 
     /**
    * @brief Constructor based on discrete uniform generator.

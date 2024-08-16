@@ -84,9 +84,31 @@ public:
    */
     std::shared_ptr<int32_t> GenerateIntVector(usint size, usint h = 0) const;
 
-private:
+protected:
     static std::uniform_int_distribution<int> m_distribution;
 };
+
+template <typename VecType>
+class DetTernaryUniformGeneratorImpl : public TernaryUniformGeneratorImpl<VecType> {
+public:
+    DetTernaryUniformGeneratorImpl(const std::vector<unsigned char>& data);
+
+    typename VecType::Integer GenerateInteger(const typename VecType::Integer&) {
+        return (0);
+    }
+
+    VecType GenerateVector(usint size, const typename VecType::Integer& modulus, usint h = 0);
+
+    std::shared_ptr<int32_t> GenerateIntVector(usint size, usint h = 0);
+
+protected:
+    static std::uniform_int_distribution<int> m_distribution;
+
+private:
+    std::unique_ptr<DeterministicPseudoRandomNumberGenerator> prng;
+};
+
+#include "detternaryuniformgenerator.tcc"
 
 }  // namespace lbcrypto
 

@@ -1102,6 +1102,27 @@ public:
         return ciphertext;
     }
 
+
+    Ciphertext<Element> EncryptZeroDeterministic(const PublicKey<Element> publicKey, const std::vector<unsigned char> &seed_data) const {
+        CheckKey(publicKey);
+
+        std::vector<int64_t> p_vec = {0};
+        Plaintext plaintext = MakePackedPlaintext(p_vec);
+
+        Ciphertext<Element> ciphertext = GetScheme()->EncryptZeroDeterministic(publicKey, seed_data);
+
+        if (ciphertext) {
+            ciphertext->SetEncodingType(plaintext->GetEncodingType());
+            ciphertext->SetScalingFactor(plaintext->GetScalingFactor());
+            ciphertext->SetScalingFactorInt(plaintext->GetScalingFactorInt());
+            ciphertext->SetNoiseScaleDeg(plaintext->GetNoiseScaleDeg());
+            ciphertext->SetLevel(plaintext->GetLevel());
+            ciphertext->SetSlots(plaintext->GetSlots());
+        }
+
+        return ciphertext;
+    }
+
     Ciphertext<Element> Encrypt(const PublicKey<Element> publicKey, Plaintext plaintext) const {
         return Encrypt(plaintext, publicKey);
     }

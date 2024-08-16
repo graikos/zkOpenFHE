@@ -209,6 +209,18 @@ public:
         OPENFHE_THROW(config_error, "Encrypt operation has not been enabled");
     }
 
+    virtual Ciphertext<Element> EncryptZeroDeterministic(const PublicKey<Element> publicKey, const std::vector<unsigned char> &seed_data) const {
+        if (m_PKE) {
+            //      if (!plaintext)
+            //        OPENFHE_THROW(config_error, "Input plaintext is nullptr");
+            if (!publicKey)
+                OPENFHE_THROW(config_error, "Input public key is nullptr");
+
+            return m_PKE->EncryptZeroDeterministic(publicKey, seed_data);
+        }
+        OPENFHE_THROW(config_error, "Encrypt operation has not been enabled");
+    }
+
     virtual DecryptResult Decrypt(ConstCiphertext<Element> ciphertext, const PrivateKey<Element> privateKey,
                                   NativePoly* plaintext) const {
         if (m_PKE) {
@@ -252,6 +264,17 @@ public:
                 OPENFHE_THROW(config_error, "Input public key is nullptr");
 
             return m_PKE->EncryptZeroCore(publicKey, nullptr, dgg);
+        }
+        OPENFHE_THROW(config_error, "EncryptZeroCore operation has not been enabled");
+    }
+
+    std::shared_ptr<std::vector<Element>> EncryptZeroCoreDeterministic(const PublicKey<Element> publicKey,
+                                                          const std::vector<unsigned char> &seed_data) const {
+        if (m_PKE) {
+            if (!publicKey)
+                OPENFHE_THROW(config_error, "Input public key is nullptr");
+
+            return m_PKE->EncryptZeroCoreDeterministic(publicKey, nullptr, seed_data);
         }
         OPENFHE_THROW(config_error, "EncryptZeroCore operation has not been enabled");
     }
