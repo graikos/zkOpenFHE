@@ -149,6 +149,14 @@ public:
 
     virtual uint64_t FindAuxPrimeStep() const;
 
+    std::vector<unsigned char> GetCCUID() const {
+        return m_cc_uid;
+    }
+
+    void SetCCUID(const std::vector<unsigned char>& uid) {
+        m_cc_uid = uid;
+    }
+
     /**
    * == operator to compare to this instance of CryptoParametersBase object.
    *
@@ -159,6 +167,11 @@ public:
 
         if (el == nullptr)
             return false;
+
+        // compare on UID too
+        if (m_cc_uid != el->GetCCUID()) {
+            return false;
+        }
 
         return CryptoParametersBase<DCRTPoly>::operator==(rhs) && m_scalTechnique == el->GetScalingTechnique() &&
                m_ksTechnique == el->GetKeySwitchTechnique() && m_multTechnique == el->GetMultiplicationTechnique() &&
@@ -1715,6 +1728,8 @@ protected:
     // Stores \frac{1/q_i}
     std::vector<double> m_multipartyQInv;
 
+    std::vector<unsigned char> m_cc_uid;
+
 public:
     /////////////////////////////////////
     // SERIALIZATION
@@ -1730,6 +1745,7 @@ public:
         ar(cereal::make_nvp("dnum", m_numPartQ));
         ar(cereal::make_nvp("ab", m_auxBits));
         ar(cereal::make_nvp("eb", m_extraBits));
+        ar(cereal::make_nvp("cc_uid", m_cc_uid));
     }
 
     template <class Archive>
@@ -1747,6 +1763,7 @@ public:
         ar(cereal::make_nvp("dnum", m_numPartQ));
         ar(cereal::make_nvp("ab", m_auxBits));
         ar(cereal::make_nvp("eb", m_extraBits));
+        ar(cereal::make_nvp("cc_uid", m_cc_uid));
     }
 
     std::string SerializedObjectName() const override {

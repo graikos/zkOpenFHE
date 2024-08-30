@@ -85,6 +85,12 @@ typename ContextGeneratorType::ContextType genCryptoContextBGVRNSInternal(
     // for BGV scheme noise scale is always set to plaintext modulus
     params->SetNoiseScale(parameters.GetPlaintextModulus());
 
+    auto uid = parameters.GetUID();
+    if (!uid.empty())
+    {
+        params->SetCCUID(uid);
+    }
+
     uint32_t numLargeDigits =
         ComputeNumLargeDigits(parameters.GetNumLargeDigits(), parameters.GetMultiplicativeDepth());
 

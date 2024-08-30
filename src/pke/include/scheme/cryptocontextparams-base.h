@@ -44,6 +44,8 @@
 #include "utils/inttypes.h"
 #include "constants.h"
 
+#include <vector>
+
 #include <iosfwd>
 
 namespace lbcrypto {
@@ -55,6 +57,8 @@ class Params {
 
     // Scheme ID
     SCHEME scheme;
+
+    std::vector<unsigned char> uid;
 
     // PlaintextModulus ptModulus is used in BGV/BFV type schemes and impacts noise growth
     PlaintextModulus ptModulus;
@@ -358,6 +362,14 @@ public:
     }
     void SetMultiHopModSize(usint multiHopModSize0) {
         multiHopModSize = multiHopModSize0;
+    }
+
+    void SetUID(const std::vector<unsigned char>& ouid) {
+        uid = ouid;
+    }
+
+    std::vector<unsigned char> GetUID() const {
+        return uid;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const Params& obj);
